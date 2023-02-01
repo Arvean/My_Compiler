@@ -63,35 +63,15 @@ void converter(char** const parsed_line, lexer_converted_t* lexer_converted) {
     lexer_converted->converted = converted_container;
 
     keyword_t keywords[] = {
-        {"KEYWORD", 102},
-        {"PRINT", 103},
-        {"INPUT", 104},
-        {"LET", 105},
-        {"IF", 106},
-        {"THEN", 107},
-        {"ENDIF", 108},
-        {"WHILE", 109},
-        {"REPEAT", 110},
-        {"ENDWHILE", 111},
-    };
+        {"KEYWORD", 102}, {"PRINT", 103}, {"INPUT", 104}, {"LET", 105}, {"IF", 106},
+        {"THEN", 107}, {"ENDIF", 108}, {"WHILE", 109}, {"REPEAT", 110},{"ENDWHILE", 111},
+        };
     operators_t operators[] = {
-        {"=", 201},
-        {"+", 202},
-        {"-", 203},
-        {"*", 204},
-        {"/", 205},
-        {"==", 206},
-        {"!=", 207},
-        {"<", 208},
-        {"<=", 209},
-        {">", 210},
-        {">=", 211},
-    };
+        {"=", 201}, {"+", 202}, {"-", 203}, {"*", 204}, {"/", 205},
+        {"==", 206}, {"!=", 207}, {"<", 208}, {"<=", 209}, {">", 210}, {">=", 211}, 
+        };
     map_t map[] = {
-        {"\n", 0},
-        {"NUMBER", 1},
-        {"IDENT", 2},
-        {"", 3},
+        {"\n", 0}, {"NUMBER", 1}, {"IDENT", 2}, {"STRING", 3},
     };
 
     int keywords_length = sizeof(keywords)/sizeof(keywords[0]);
@@ -114,6 +94,9 @@ void converter(char** const parsed_line, lexer_converted_t* lexer_converted) {
         else if (strcmp(parsed_line[j], "\n") == 0) {
             lexer_converted->converted[j] = map[0].value; //Set to NEWLINE value
         }
+        else if (parsed_line[j][0] == '"') {
+            lexer_converted->converted[j] = map[3].value; //Set to STRING value
+        }
         else {
             for (int i = 0; i < operators_length; i++) {
                 if (strcmp(parsed_line[j], operators[i].key) == 0) {
@@ -126,7 +109,7 @@ void converter(char** const parsed_line, lexer_converted_t* lexer_converted) {
     }
 
     lexer_converted->converted[j] = '\0';
-    lexer_converted->converted_length = j;
+    lexer_converted->converted_length = j+1;
 }
 
 // Convert each token for each line for all lines in the file to the lexed classifier

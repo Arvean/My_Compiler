@@ -18,5 +18,3 @@ int main(int argc, char **argv){
         printf("%i\n", lexer_converted.converted[i]);
     }
 }
-
-// 105 2 201 1
