@@ -29,10 +29,6 @@ void read_input(lexer_line_t* lexer_line);
 void parse_line(char* const line, lexer_parsed_line_t* lexer_parsed_line);
 void converter(char** const parsed_line, lexer_converted_t* lexer_converted);
 
-
-char keywords[9][15];
-int keywords_length;
-
 typedef struct {
     char *key;
     int value;
@@ -47,5 +43,12 @@ typedef struct {
     char *key;
     int value;
 } map_t;
+
+keyword_t keywords[10];
+operators_t operators[11];
+map_t map[4];
+int keywords_length;
+int operators_length;
+int map_length;
 
 #endif
