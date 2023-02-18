@@ -19,7 +19,10 @@ int main(int argc, char **argv){
         printf("%i\n", lexer_converted.converted[i]);
     }
 
-    if (!program(lexer_converted.converted)) {
+    int temp = 0;
+    int *itr = &temp;
+
+    if (!program(lexer_converted.converted, lexer_converted.converted_length, itr)) {
         printf("%s\n", "PARSER SUCCESSFULL");
     }
     else {

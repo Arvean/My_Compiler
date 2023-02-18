@@ -10,14 +10,16 @@
 #define TOKEN_BUFSIZE 64
 
 
-int program(int *converted);
-int statement(int *converted);
-int expression(int *expression);
-int comparison(int *comparison);
-int term(int *term);
-int unary(int *unary);
-int primary(int primary);
+int program(int *converted, int converted_length, int *itr);
+int statement(int *converted, int converted_length, int *itr);
+int expression(int *converted, int *itr);
+int comparison(int *converted, int *itr);
+int term(int *converted, int *itr);
+int unary(int *converted, int *itr);
+int primary(int* converted, int *itr);
 
+int *itr;
+int *converted_peak;
 int converted_length[BUFSIZE];
 int if_comparison[BUFSIZE];
 int if_statement[BUFSIZE];

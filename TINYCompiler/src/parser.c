@@ -7,8 +7,8 @@ operators_t operators[] = {
 };
 int operators_length = sizeof(operators)/sizeof(operators[0]);
 
-int program(int *converted){
-    if (!statement(converted)) {
+int program(int *converted, int converted_length, int *itr){
+    if (!statement(converted, converted_length, itr)) {
         printf("%s\n", "STATEMENT");
         return 0;
     }
@@ -18,16 +18,17 @@ int program(int *converted){
     }
 }
 
-int statement(int *converted){
-    int converted_length = sizeof(converted)/sizeof(int);
+int statement(int *converted, int converted_length, int *itr){
     int i;
-    switch(converted[0]){
+    switch(converted[*itr]){
         case 103:  // PRINT
+            
+            (*itr)++;
             if (converted[1] == 3) {
                 printf("%s\n", "STRING");
                 return 0;
             }
-            else if (!expression(converted)){
+            else if (!expression(converted, itr)){
                 return 0; // Correct PRINT grammar
             }
             else {
@@ -36,101 +37,100 @@ int statement(int *converted){
             }
         
         case 106: // IF
-            // Check grammar of IF statement 
-            i = 1; // Start with 1 to not include IF in the comparison at the 0 index
-            if (converted[converted_length-2] == 108) { // ENDIF
+
+            
+            (*itr)++;
+            printf("%s\n", "after if");
+            printf("%i\n", converted[*itr]);
+            if (comparison(converted, itr)) {
+                perror("Comparison Error, IF");
+                return 1;
+            }
+
+            if (converted[*itr] != 107) { // THEN
+                printf("%s\n", "BUG");
+                printf("%i\n", converted[*itr]);
+                perror("Incomplete IF statement, THEN");
+                return 1;
+            }
+            
+            (*itr)++;
+            printf("%i\n", converted[*itr]);
+
+            if (statement(converted, converted_length, itr)) {
+                perror("Statement Error, IF");
+                return 1;
+            }
+
+            if (converted[*itr] != 108) { // ENDIF
                 perror("Incomplete IF statement, ENDIF");
                 return 1;
             }
-            while (converted[i] != 107) { // THEN
-                if_comparison[i-1] = converted[i];
-                i++;
-                if (converted[i] == 108) { // If there is no "THEN", ENDIF
-                    perror("Incomplete IF statement, THEN");
-                    return 1;
-                }
-            }
-            while (converted[i] != 108) { // ENDIF
-                if_statement[i-1] = converted[i];
-                i++;
-            }
-
-            if (!comparison(if_comparison)){ //Check if both the comparison and the statement are valid
-                printf("%s\n", "IF_COMPARISON");
-                if (!statement(if_statement)){
-                    printf("%s\n", "IF_STATEMENT");
-                    return 0; // Correct IF grammar
-                }
-                else {
-                    perror("Error with IF_STATEMENT");
-                    return 1;
-                }
-            }
-            else {
-                perror("Error with IF_COMPARISON");
-                return 1;
-            }
+            printf("%s\n", "IF");
+            return 0;
 
         case 109: // WHILE
-            // Check grammar of WHILE statement 
-            i = 1; // Start with 1 to not include WHILE in the comparison at the 0 index
-            if (converted[converted_length-2] == 111) { // ENDWHILE
+
+            if (converted[converted_length-2] != 111) { // END WHILE
                 perror("Incomplete WHILE statement, ENDWHILE");
                 return 1;
             }
-            while (converted[i] != 110) { // REPEAT
-                while_comparison[i-1] = converted[i];
-                i++;
-                if (converted[i] == 111) { // If there is no "REPEAT", ENDWHILE
-                    perror("Incomplete WHILE statement, REPEAT");
-                    return 1;
-                }
-            }
-            while (converted[i] != 111) { // ENDWHILE
-                while_statement[i-1] = converted[i];
-                i++;
-            }
-
-            if (!comparison(while_comparison)){ //Check if both the comparison and the statement are valid
-                printf("%s\n", "WHILE_COMPARISON");
-                if (!statement(while_statement)){
-                    printf("%s\n", "WHILE_STATEMENT");
-                    return 0; // Correct WHILE grammar
-                }
-                else {
-                    perror("Error with WHILE_STATEMENT");
-                    return 1;
-                }
-            }
-            else {
-                perror("Error with WHILE_COMPARISON");
+            
+            (*itr)++;
+            if (comparison(converted, itr)) {
+                perror("Comparison Error, WHILE");
                 return 1;
             }
+
+            if (converted[*itr] != 110) { // REPEAT
+                perror("Incomplete WHILE statement, REPEAT");
+                return 1;
+            }
+            
+            (*itr)++;
+
+            if (statement(converted, converted_length, itr)) {
+                perror("Statement Error, WHILE");
+                return 1;
+            }
+
+            if (converted[*itr] != 111) { // ENDWHILE
+                perror("Incomplete WHILE statement, ENDWHILE");
+                return 1;
+            }
+            printf("%s\n", "WHILE");
+            return 0;
 
         case 105: // LET
-            i = 3;
-            if (converted[1] != 2) { // IDENT
-                perror("NO IDENT AFTER LET");
+            
+            (*itr)++;
+            if (converted[*itr] != 2) { // IDENT
+                perror("Not IDENT in LET");
                 return 1;
             }
-            else if (converted[2] != 201) { // =
-                perror("NO = AFTER IDENT");
+            
+            (*itr)++;
+            if (converted[*itr] != 201) { // =
+                perror("No = in LET");
                 return 1;
             }
-            while (i < converted_length) {
-                let_1[i-3] = converted[i];
-                i++;
+            
+            (*itr)++;
+
+            if (expression(converted, itr)) {
+                perror("Comparison Error, WHILE");
+                return 1;
             }
-            if (!expression(let_1)){
-                printf("%s\n", "LET");
-                return 0; // Correct LET grammar
-            }
-            perror("Error with LET in statement");
-            return 1;
+
+            printf("%s\n", "LET");
+            return 0;
 
         case 104: // INPUT
-            if (converted[1] != 2) { // IDENT
-                printf("%s\n", "NO IDENT AFTER LET");
+            
+            (*itr)++;
+
+            if (converted[*itr] != 2) { // IDENT
+                printf("%s\n", "NO IDENT AFTER INPUT");
                 return 1;
             }
             printf("%s\n", "INPUT");
@@ -142,155 +142,99 @@ int statement(int *converted){
     }
 }
 
-int comparison(int *comparison){
-    int comparison_length = sizeof(comparison) / sizeof(comparison[0]);
-    // Check grammar of COMPARISON statement 
-    int i = 0; 
-    int is_equality_operator = 0;
+int comparison(int *converted, int *itr){
 
-    while (!is_equality_operator) {
-        for (int j = 0; j < operators_length; j++) {
-            if (comparison[i] == operators[j].value) {
-                is_equality_operator = 1;
-                break;
-            }
-        }
-        expression_1[i] = comparison[i];
-        i++;
-        if (i == comparison_length) {
-            perror("No operator in comparison!");
-            return 1;
-        }
-    }
-    while (i < comparison_length) {
-        expression_2[i] = comparison[i];
-        i++;
-    }
-
-    if (!expression(expression_1)){ 
-        printf("%s\n", "EXPRESSION_1");
-        if (!expression(expression_2)){
-            printf("%s\n", "EXPRESSION_2");
-            return 0; // Correct EXPRESSION grammar 
-        }
-        else {
-            perror("Error with EXPRESSION_2");
-            return 1;
-        }
-    }
-    else {
-        perror("Error with EXPRESSION_1");
+    if (expression(converted, itr)) {
+        perror("Expression Error, COMPARISON");
         return 1;
     }
+    printf("%i\n", converted[*itr]);
+
+    for (int i=0; i < operators_length; i++) {
+        if (converted[*itr] == operators[i].value) {
+            printf("%s\n", "found operator");
+            printf("%i\n", converted[*itr]);
+            break;
+        }
+        if (i == operators_length-1) {
+            printf("%i\n", converted[*itr]);
+            perror("Expected operator, COMPARISON");
+            return 1;
+        }
+    }
+
+    (*itr)++;
+
+    if (expression(converted, itr)) {
+        perror("Expression Error, COMPARISON");
+        return 1;
+    }
+    printf("%s\n", "COMPARISON");
+    return 0;
 }
 
-int expression(int *expression){
-    int expression_length = sizeof(expression) / sizeof(expression[0]);
+
+int expression(int *converted, int *itr){
+
+    if (term(converted, itr)) {
+        perror("Term Error, EXPRESSION");
+        return 1;
+    }
+
+    while (converted[*itr+1] == 202 || converted[*itr+1] == 203){ // +,-
+        (*itr)+=2;
+        if (term(converted, itr)) {
+            perror("Term Error, EXPRESSION");
+            return 1;
+        }
+    }
+    printf("%i\n", converted[*itr]);
     printf("%s\n", "EXPRESSION");
-    // Check grammar of EXPRESSION 
-    int i = -1; 
-    int k = 0;
-
-    while (i!= expression_length){
-        i++;
-        while (expression[k] != 202 || expression[k] != 203) { // +, -
-            term_1[k] = expression[i];
-            if (i == expression_length) {
-                if (!term(term_1)) {
-                    return 0;
-                }
-                else {
-                    return 1;
-                }
-            } // BUG HERE: Did not account for {} (one or MORE) splitting the array up incorrectly
-            k++;
-            i++;
-        } // FIX: Iterate element by element and check for no grammar faults
-        if (term(term_1)) {
-            perror("Expression fails term check");
-            return 1;
-        }
-        if (i == expression_length) {
-            perror("Need to define term after operator");
-            return 1;
-        }
-        k = 0;
-    }
-
-    if (!term(term_1)){ 
-        printf("%s\n", "TERM_1");
-        if (!term(term_2)){
-            printf("%s\n", "TERM_2");
-            return 0; // Correct TERM grammar 
-        }
-        else {
-            perror("Error with TERM_2");
-            return 1;
-        }
-    }
-    else {
-        perror("Error with TERM_1");
-        return 1;
-    }
+    return 0;
 }
 
-int term(int *term){
-    int term_length = sizeof(term) / sizeof(term[0]);
-    // Check grammar of EXPRESSION 
-    int i = 0; 
+int term(int *converted, int *itr){
 
-    while (term[i] != 204 || term[i] != 205) { // *, /
-        unary_1[i] = term[i];
-        i++;
-        if (i == term_length) {
-            perror("No sign operator in term!");
+    if (unary(converted, itr)) {
+        perror("Unary Error, TERM");
+        return 1;
+    }
+
+    while (converted[*itr+1] == 204 || converted[*itr+1] == 205){ // *,/
+        (*itr)+=2;
+        if (unary(converted, itr)) {
+            perror("Unary Error, TERM");
             return 1;
         }
     }
-    while (i < term_length) {
-        unary_2[i] = term[i];
-        i++;
-    }
-
-    if (!unary(unary_1)){ 
-        printf("%s\n", "UNARY_1");
-        if (!unary(unary_2)){
-            printf("%s\n", "UNARY_2");
-            return 0; // Correct UNARY grammar 
-        }
-        else {
-            perror("Error with UNARY_2");
-            return 1;
-        }
-    }
-    else {
-        perror("Error with UNARY_1");
-        return 1;
-    }
+    printf("%i\n", converted[*itr]);
+    printf("%s\n", "TERM");
+    return 0;
 }
 
-int unary(int *unary){
-    int primary_1;
-    int i = 1;
+int unary(int *converted, int *itr){
 
-    if (unary[0] != 202 || unary[0] != 203){
-        perror("Error with UNARY, no sign");
+    if (converted[*itr] == 202 || converted[*itr] == 203){ // +,-
+        
+        (*itr)++;
+    }
+
+    if (primary(converted, itr)) {
+        perror("Primary Error, UNARY");
         return 1;
     }
-    primary_1 = unary[1];
-
-    if (!primary(primary_1)){
-        printf("%s\n", "PRIMARY_1");
-        return 0; // Correct UNARY grammar 
-    }
-    else {
-        perror("Error with PRIMARY_1");
-        return 1;
-    }
+    printf("%i\n", converted[*itr]);
+    printf("%s\n", "UNARY");
+    return 0;
 }
 
-int primary(int primary){
-    if (primary == 1 || primary == 2){ // NUMBER, IDENT
+int primary(int *converted, int *itr){
+
+    if (converted[*itr] == 1 || converted[*itr] == 2){ // NUMBER, IDENT
+        
+        (*itr)++;
+        printf("%i\n", converted[*itr]);
+        printf("%s\n", "PRIMARY");
         return 0;
     }
     perror("Error with PRIMARY, not the right data type");
