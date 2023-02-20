@@ -7,8 +7,40 @@ operators_t operators[] = {
 };
 int operators_length = sizeof(operators)/sizeof(operators[0]);
 
-int program(int *converted, int converted_length, int *itr){
-    if (!statement(converted, converted_length, itr)) {
+declared_t declared_idents;
+int declare_size = 0;
+
+char* insert_buffer(char *buffer_ptr, char **parsed_line, int condition_start, int condition_end) {
+    for (int i = condition_start; i < condition_end; i++) {
+        strncpy(buffer_ptr, parsed_line[i], strlen(parsed_line[i]));
+        buffer_ptr += strlen(parsed_line[i]);
+    }
+    return buffer_ptr;
+}
+
+int is_declared(char *identifier) {
+
+    declared_idents.declared_list_length = &declare_size;
+    int i;
+    for (i=0; i < *declared_idents.declared_list_length; i++) {
+        if (strcmp(identifier, declared_idents.declare_container[i]) == 0) {
+            return 1;
+        }
+    }
+
+    strcpy(declared_idents.declare_container[i], identifier);
+    (*declared_idents.declared_list_length)++;
+    return 0;
+}
+
+int program(int *converted, int converted_length, char **parsed_line, int *itr, FILE* output, FILE* body){
+    
+    if (converted_length == 0) {
+        printf("%s\n", "STATEMENT");
+        return 0;
+    }
+
+    if (!statement(converted, converted_length, parsed_line, itr, output, body)) {
         printf("%s\n", "STATEMENT");
         return 0;
     }
@@ -18,17 +50,40 @@ int program(int *converted, int converted_length, int *itr){
     }
 }
 
-int statement(int *converted, int converted_length, int *itr){
+int statement(int *converted, int converted_length, char **parsed_line, int *itr, FILE* output, FILE* body){
     int i;
+    char buffer[500];
+
     switch(converted[*itr]){
         case 103:  // PRINT
-            
+        
             (*itr)++;
-            if (converted[1] == 3) {
+            int condition_start = *itr;
+            if (converted[*itr] == 3) {
+                sprintf(buffer, "printf(\"%s\");\n", parsed_line[*itr]); // Format string
+
+                fputs(buffer, body);
                 printf("%s\n", "STRING");
                 return 0;
             }
-            else if (!expression(converted, itr)){
+            
+            else if (!expression(converted, parsed_line, itr, output, body)){
+                char *buffer_ptr = (char *) buffer;
+                int condition_end = *itr;
+                char temp[100] = "printf(\"%i\\n\", ";
+                char *tmp_ptr = (char *) temp;
+                char print_buf[100];
+                char *print_ptr = (char *) print_buf;
+
+                buffer_ptr = insert_buffer(buffer_ptr, parsed_line, condition_start, condition_end);
+                *buffer_ptr = '\0';
+
+                strncpy(print_buf, tmp_ptr, strlen(tmp_ptr));
+                print_ptr+=strlen(tmp_ptr);
+
+                sprintf(print_ptr, "%s);\n", buffer); // Format string
+                fputs(print_buf, body);
+
                 return 0; // Correct PRINT grammar
             }
             else {
@@ -37,30 +92,49 @@ int statement(int *converted, int converted_length, int *itr){
             }
         
         case 106: // IF
-
             
             (*itr)++;
-            printf("%s\n", "after if");
+            condition_start = *itr;
+            sprintf(buffer, "if (%s", parsed_line[*itr]); // Format string
+            condition_start++;
+            
+            char *buffer_ptr = (char *) buffer;
+            buffer_ptr += strlen(buffer);
+
             printf("%i\n", converted[*itr]);
-            if (comparison(converted, itr)) {
+            if (comparison(converted, parsed_line, itr, output, body)) {
                 perror("Comparison Error, IF");
                 return 1;
             }
 
+            int condition_end = *itr;
+            buffer_ptr = insert_buffer(buffer_ptr, parsed_line, condition_start, condition_end);
+            
+            *buffer_ptr = ')';
+            buffer_ptr++;
+            *buffer_ptr = '{';
+            buffer_ptr++;
+            *buffer_ptr = '\n';
+            buffer_ptr++;
+            *buffer_ptr = '\0';
+
+            fputs(buffer, body);
+            memset(buffer, 0, sizeof(buffer));
+            buffer_ptr = (char *) buffer;
+
             if (converted[*itr] != 107) { // THEN
-                printf("%s\n", "BUG");
-                printf("%i\n", converted[*itr]);
                 perror("Incomplete IF statement, THEN");
                 return 1;
             }
-            
             (*itr)++;
-            printf("%i\n", converted[*itr]);
 
-            if (statement(converted, converted_length, itr)) {
+            printf("%i\n", converted[*itr]);
+            if (statement(converted, converted_length, parsed_line, itr, output, body)) {
                 perror("Statement Error, IF");
                 return 1;
             }
+
+            fputs("}\n", body);
 
             if (converted[*itr] != 108) { // ENDIF
                 perror("Incomplete IF statement, ENDIF");
@@ -70,17 +144,35 @@ int statement(int *converted, int converted_length, int *itr){
             return 0;
 
         case 109: // WHILE
-
-            if (converted[converted_length-2] != 111) { // END WHILE
-                perror("Incomplete WHILE statement, ENDWHILE");
-                return 1;
-            }
             
             (*itr)++;
-            if (comparison(converted, itr)) {
+            condition_start = *itr;
+            sprintf(buffer, "while (%s", parsed_line[*itr]); // Format string
+            condition_start++;
+
+            buffer_ptr = (char *) buffer;
+            buffer_ptr += strlen(buffer);
+
+            printf("%i\n", converted[*itr]);
+            if (comparison(converted, parsed_line, itr, output, body)) {
                 perror("Comparison Error, WHILE");
                 return 1;
             }
+
+            condition_end = *itr;
+            buffer_ptr = insert_buffer(buffer_ptr, parsed_line, condition_start, condition_end);
+            
+            *buffer_ptr = ')';
+            buffer_ptr++;
+            *buffer_ptr = '{';
+            buffer_ptr++;
+            *buffer_ptr = '\n';
+            buffer_ptr++;
+            *buffer_ptr = '\0';
+
+            fputs(buffer, body);
+            memset(buffer, 0, sizeof(buffer));
+            buffer_ptr = (char *) buffer;
 
             if (converted[*itr] != 110) { // REPEAT
                 perror("Incomplete WHILE statement, REPEAT");
@@ -89,12 +181,16 @@ int statement(int *converted, int converted_length, int *itr){
             
             (*itr)++;
 
-            if (statement(converted, converted_length, itr)) {
+            printf("%i\n", converted[*itr]);
+            if (statement(converted, converted_length, parsed_line, itr, output, body)) {
                 perror("Statement Error, WHILE");
                 return 1;
             }
 
+            fputs("}\n", body);
+
             if (converted[*itr] != 111) { // ENDWHILE
+                printf("%i\n", converted[*itr]);
                 perror("Incomplete WHILE statement, ENDWHILE");
                 return 1;
             }
@@ -102,14 +198,19 @@ int statement(int *converted, int converted_length, int *itr){
             return 0;
 
         case 105: // LET
-            
+
             (*itr)++;
+            buffer_ptr = (char *) buffer;
+            condition_start = *itr;
+
+            printf("%i\n", converted[*itr]);
             if (converted[*itr] != 2) { // IDENT
                 perror("Not IDENT in LET");
                 return 1;
             }
             
             (*itr)++;
+            printf("%i\n", converted[*itr]);
             if (converted[*itr] != 201) { // =
                 perror("No = in LET");
                 return 1;
@@ -117,10 +218,38 @@ int statement(int *converted, int converted_length, int *itr){
             
             (*itr)++;
 
-            if (expression(converted, itr)) {
+            printf("%i\n", converted[*itr]);
+            if (expression(converted, parsed_line, itr, output, body)) {
                 perror("Comparison Error, WHILE");
                 return 1;
             }
+            condition_end = *itr;
+
+            buffer_ptr = insert_buffer(buffer_ptr, parsed_line, condition_start, condition_end);
+            *buffer_ptr = '\0';
+
+            if (converted[*itr-1] == 1) { // NUMBER
+                if (!is_declared(parsed_line[condition_start])) {
+                    char let_buf[500];
+                    char *let_ptr = (char *) let_buf;
+                    sprintf(let_buf, "%s", "int "); 
+                    let_ptr += strlen(let_buf);
+                    strncpy(let_ptr, parsed_line[condition_start], strlen(parsed_line[condition_start]));
+                    let_ptr += strlen(parsed_line[condition_start]);
+                    *let_ptr = ';';
+                    let_ptr++;
+                    *let_ptr = '\n';
+                    let_ptr++;
+                    *let_ptr = '\0';
+                    fputs(let_buf, output);
+                }
+            }
+            *buffer_ptr = ';';
+            buffer_ptr++;
+            *buffer_ptr = '\n';
+            buffer_ptr++;
+            *buffer_ptr = '\0';
+            fputs(buffer, body);
 
             printf("%s\n", "LET");
             return 0;
@@ -142,9 +271,9 @@ int statement(int *converted, int converted_length, int *itr){
     }
 }
 
-int comparison(int *converted, int *itr){
+int comparison(int *converted, char **parsed_line, int *itr, FILE* output, FILE* body){
 
-    if (expression(converted, itr)) {
+    if (expression(converted, parsed_line, itr, output, body)) {
         perror("Expression Error, COMPARISON");
         return 1;
     }
@@ -165,7 +294,7 @@ int comparison(int *converted, int *itr){
 
     (*itr)++;
 
-    if (expression(converted, itr)) {
+    if (expression(converted, parsed_line, itr, output, body)) {
         perror("Expression Error, COMPARISON");
         return 1;
     }
@@ -174,16 +303,18 @@ int comparison(int *converted, int *itr){
 }
 
 
-int expression(int *converted, int *itr){
+int expression(int *converted, char **parsed_line, int *itr, FILE* output, FILE* body){
 
-    if (term(converted, itr)) {
+    printf("%i\n", converted[*itr]);
+    if (term(converted, parsed_line, itr, output, body)) {
         perror("Term Error, EXPRESSION");
         return 1;
     }
 
-    while (converted[*itr+1] == 202 || converted[*itr+1] == 203){ // +,-
-        (*itr)+=2;
-        if (term(converted, itr)) {
+    while (converted[*itr] == 202 || converted[*itr] == 203){ // +,-
+        (*itr)++;
+        printf("%i\n", converted[*itr]);
+        if (term(converted, parsed_line, itr, output, body)) {
             perror("Term Error, EXPRESSION");
             return 1;
         }
@@ -193,16 +324,18 @@ int expression(int *converted, int *itr){
     return 0;
 }
 
-int term(int *converted, int *itr){
+int term(int *converted, char **parsed_line, int *itr, FILE* output, FILE* body){
 
-    if (unary(converted, itr)) {
+    printf("%i\n", converted[*itr]);
+    if (unary(converted, parsed_line, itr, output, body)) {
         perror("Unary Error, TERM");
         return 1;
     }
 
     while (converted[*itr+1] == 204 || converted[*itr+1] == 205){ // *,/
         (*itr)+=2;
-        if (unary(converted, itr)) {
+        printf("%i\n", converted[*itr]);
+        if (unary(converted, parsed_line, itr, output, body)) {
             perror("Unary Error, TERM");
             return 1;
         }
@@ -212,14 +345,15 @@ int term(int *converted, int *itr){
     return 0;
 }
 
-int unary(int *converted, int *itr){
+int unary(int *converted, char **parsed_line, int *itr, FILE* output, FILE* body){
 
     if (converted[*itr] == 202 || converted[*itr] == 203){ // +,-
         
         (*itr)++;
     }
 
-    if (primary(converted, itr)) {
+    printf("%i\n", converted[*itr]);
+    if (primary(converted, parsed_line, itr, output, body)) {
         perror("Primary Error, UNARY");
         return 1;
     }
@@ -228,8 +362,8 @@ int unary(int *converted, int *itr){
     return 0;
 }
 
-int primary(int *converted, int *itr){
-
+int primary(int *converted, char **parsed_line, int *itr, FILE* output, FILE* body){
+    printf("%i\n", converted[*itr]);
     if (converted[*itr] == 1 || converted[*itr] == 2){ // NUMBER, IDENT
         
         (*itr)++;
@@ -239,50 +373,4 @@ int primary(int *converted, int *itr){
     }
     perror("Error with PRIMARY, not the right data type");
     return 1;
-}
-
-int checkGrammer(lexer_converted_t* lexer_converted, int (*function_1)(int*), int (*function_2)(int*), int *buffer_1, int *buffer_2, int label_1, int label_2){
-    // Function to break up lexer based on the second term to provide as input to functions specific to the grammar rule. Checks grammar
-
-    // DEFINE BUFFER SIZES IN MAIN (PLACE IN MAIN)
-    //*buffer_1 = TOKEN_BUFSIZE*converted_length;
-    //*buffer_2 = TOKEN_BUFSIZE*converted_length;
-
-    // Check grammar of IF statement 
-    int i = 1; // CONTINUE: Change based on rule
-    if (lexer_converted->converted[0] == 106 || lexer_converted->converted[0] == 109){ // IF, WHILE
-        if (lexer_converted->converted[lexer_converted->converted_length-2] == label_1) { // ENDIF, ENDWHILE
-            perror("Incomplete END to conditional statement or loop");
-            return 1;
-        }
-    }
-    // CONTINUE: Automate instead of passing as parameter label 1 and label 2 checks
-    while (lexer_converted->converted[i] != label_2) { // THEN, REPEAT, ==, etc.
-        buffer_1[i-1] = lexer_converted->converted[i];
-        i++;
-        if (lexer_converted->converted[i] == label_1) { // ENDIF, ENDWHILE, NULL (THEN, REPEAT, ==, etc. doesn't exist)
-            perror("Incomplete Second Term (THEN, REPEAT, etc.)");
-            return 1;
-        }
-    }
-    while (lexer_converted->converted[i] != label_1) { // ENDIF, ENDWHILE, NULL
-        buffer_2[i-1] = lexer_converted->converted[i];
-        i++;
-    }
-
-    if (!function_1(buffer_1)){ //Check if both the function 1 (comparison, etc.) and function 2 (statement, etc.) are valid
-        printf("%s\n", "Buffer_1");
-        if (!function_2(buffer_2)){
-            printf("%s\n", "Buffer_2");
-            return 0; // Return 0 indicating correct grammar check
-        }
-        else {
-            perror("Error with Buffer_1 (IF_STATEMENT, etc.)");
-            return 1;
-        }
-    }
-    else {
-        perror("Error with Buffer_2 (IF_COMPARISON, etc.)");
-        return 1;
-    }
 }

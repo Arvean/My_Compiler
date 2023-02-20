@@ -1,0 +1,6 @@
+LET x = 5
+IF x == 5 THEN LET x = x + 1 ENDIF
+
+WHILE x < 10 REPEAT LET x = x + 1 ENDWHILE
+
+PRINT x

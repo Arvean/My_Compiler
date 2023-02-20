@@ -7,7 +7,7 @@ char* token = token_container;
 
 int converted_container[TOKEN_BUFSIZE];
 
-void read_input(lexer_line_t* lexer_line){
+void read_input(lexer_line_t* lexer_line, int debug){
     // Read an input from the command line of the shell
     // Returns a pointer to the line array
     lexer_line->line = input;
@@ -44,6 +44,7 @@ void parse_line(char* const line, lexer_parsed_line_t* lexer_parsed_line) {
     token = strtok(line, TOK_DELIM);
 
     while (token != NULL) {
+        printf("%s\n", token);
         lexer_parsed_line->parsed_line[i] = token;
         i++;
 
@@ -108,8 +109,7 @@ void converter(char** const parsed_line, lexer_converted_t* lexer_converted) {
         j++;
     }
 
-    lexer_converted->converted[j] = 0;
-    lexer_converted->converted_length = j+1;
+    lexer_converted->converted_length = j;
 }
 
 // Convert each token for each line for all lines in the file to the lexed classifier

@@ -16,6 +16,8 @@
         "__locale": "c",
         "lexer.h": "c",
         "string.h": "c",
-        "locale": "c"
+        "locale": "c",
+        "sstream": "c",
+        "ios": "c"
     }
 }

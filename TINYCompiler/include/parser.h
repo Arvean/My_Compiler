@@ -9,14 +9,21 @@
 #define BUFSIZE 1024
 #define TOKEN_BUFSIZE 64
 
+typedef struct {
+    char declare_container[TOKEN_BUFSIZE][BUFSIZE];
+    int *declared_list_length;
+} declared_t;
 
-int program(int *converted, int converted_length, int *itr);
-int statement(int *converted, int converted_length, int *itr);
-int expression(int *converted, int *itr);
-int comparison(int *converted, int *itr);
-int term(int *converted, int *itr);
-int unary(int *converted, int *itr);
-int primary(int* converted, int *itr);
+int is_declared(char *identifier);
+
+char* insert_buffer(char *buffer_ptr, char **parsed_line, int condition_start, int condition_end);
+int program(int *converted, int converted_length, char **parsed_line, int *itr, FILE* header, FILE* body);
+int statement(int *converted, int converted_length, char **parsed_line, int *itr, FILE* header, FILE* body);
+int expression(int *converted, char **parsed_line, int *itr, FILE* header, FILE* body);
+int comparison(int *converted, char **parsed_line, int *itr, FILE* header, FILE* body);
+int term(int *converted, char **parsed_line, int *itr, FILE* header, FILE* body);
+int unary(int *converted, char **parsed_line, int *itr, FILE* header, FILE* body);
+int primary(int* converted, char **parsed_line, int *itr, FILE* header, FILE* body);
 
 int *itr;
 int *converted_peak;

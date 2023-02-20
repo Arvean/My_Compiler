@@ -25,7 +25,7 @@ typedef struct {
 } lexer_converted_t;
 
 int is_keyword(char const keywords[10][15], int size, char* const str, char (*keyword)[15]);
-void read_input(lexer_line_t* lexer_line);
+void read_input(lexer_line_t* lexer_line, int debug);
 void parse_line(char* const line, lexer_parsed_line_t* lexer_parsed_line);
 void converter(char** const parsed_line, lexer_converted_t* lexer_converted);
 
