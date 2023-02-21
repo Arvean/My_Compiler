@@ -30,7 +30,7 @@ Grammar Rules:
 
   -------------------------------------------------------------------------
 
-  Example user_input.txt:
+  (1) Example user_input.txt:
 
     LET x = 5
     IF x == 5 THEN LET x = x + 1 ENDIF
@@ -40,6 +40,26 @@ Grammar Rules:
     PRINT x
     INPUT foobar
     PRINT foobar
+  -------------------------------------------------------------------------
+ 
+  (1) Example output.c:
+  
+  #include <stdlib.h>
+  #include <stdio.h>
+  int main(void){
+  int x;
+  int foobar; 
+  x=5;
+  if (x==5){
+  x=x+1;
+  }
+  while (x<10){
+  x=x+1;
+  }
+  printf("%i\n", x);
+  scanf("%i", &foobar);
+  printf("%i\n", foobar);
+  return 0;
   -------------------------------------------------------------------------
 
 To DO:
