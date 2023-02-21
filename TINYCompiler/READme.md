@@ -43,7 +43,7 @@ Grammar Rules:
   -------------------------------------------------------------------------
 
   Example output.c:
-  
+
     #include <stdlib.h>
     #include <stdio.h>
     int main(void){
@@ -61,7 +61,7 @@ Grammar Rules:
     printf("%i\n", foobar);
     return 0;
     }
-
+  -------------------------------------------------------------------------
 
 To DO:
  1. Instead of compiling line by line, store in buffer and compile buffer
