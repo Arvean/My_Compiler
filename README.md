@@ -1,1 +1,1 @@
-# Simple_Compiler
+Check the ReadMe in the TinyCompiler folder
