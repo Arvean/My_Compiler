@@ -70,8 +70,8 @@ int statement(int *converted, int converted_length, char **parsed_line, int *itr
             else if (!expression(converted, parsed_line, itr, output, body)){
                 char *buffer_ptr = (char *) buffer;
                 int condition_end = *itr;
-                char temp[100] = "printf(\"%i\\n\", ";
-                char *tmp_ptr = (char *) temp;
+                char print_temp[100] = "printf(\"%i\\n\", ";
+                char *tmp_ptr = (char *) print_temp;
                 char print_buf[100];
                 char *print_ptr = (char *) print_buf;
 
@@ -262,6 +262,21 @@ int statement(int *converted, int converted_length, char **parsed_line, int *itr
                 printf("%s\n", "NO IDENT AFTER INPUT");
                 return 1;
             }
+
+            sprintf(buffer, "int %s; \n", parsed_line[*itr]);
+            fputs(buffer, output);
+
+            char scanf_buffer[100];
+            char *scan_ptr = (char *) scanf_buffer;
+            char input_temp[100] = "scanf(\"%i\", ";
+            char *tmp_ptr = (char *) input_temp;
+
+            strncpy(scanf_buffer, tmp_ptr, strlen(tmp_ptr));
+            scan_ptr+=strlen(tmp_ptr);
+            sprintf(scan_ptr, "&%s);\n", parsed_line[*itr]);
+
+            fputs(scanf_buffer, body);
+
             printf("%s\n", "INPUT");
             return 0; // Correct INPUT grammar
 

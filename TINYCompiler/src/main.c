@@ -50,12 +50,12 @@ int main(int argc, char **argv){
     lexer_line_t lexer_line;
     int debug = 0;
 
-    if (!debug) { //PROBLEM ENDIF in test.txt is being read as an IDENT
+    if (!debug) {
         FILE *fp;
         char txt_line[BUFSIZE];
         lexer_line.line = txt_line;
 
-        fp = fopen("test.txt", "r"); 
+        fp = fopen("user_input.txt", "r"); 
         if (fp == NULL) {
             printf("Error opening file\n");
             return 1;
@@ -63,7 +63,7 @@ int main(int argc, char **argv){
 
         while (fgets(lexer_line.line, BUFSIZE, fp) != NULL) {
 
-            size_t newline_pos = strcspn(lexer_line.line, "\n"); // Handle newline bug
+            size_t newline_pos = strcspn(lexer_line.line, "\n"); 
             if (lexer_line.line[newline_pos] == '\n') {
                 lexer_line.line[newline_pos] = '\0';
             }
